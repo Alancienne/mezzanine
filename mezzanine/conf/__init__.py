@@ -118,7 +118,8 @@ class Settings:
     TYPE_FUNCTIONS = {
         bool: lambda val: val != "False",
         bytes: partial(bytes, encoding="utf8"),
-        dict: lambda val: json.loads(val)
+        dict: lambda val: json.loads(val.replace('\'', '\"')),
+        list: lambda val: val.split(',')
     }
 
     @property
@@ -180,7 +181,6 @@ class Settings:
         except ValueError:
             # Shouldn't occur, but just a safeguard in case
             # the db value somehow ended up as an invalid type.
-            print(setting[type], raw_value)
             warn(
                 "The setting %s should be of type %s, but the value "
                 "retrieved from the database (%s) could not be converted. "
