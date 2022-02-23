@@ -7,13 +7,14 @@ from functools import wraps
 import django
 from django.conf import settings
 
-# Middleware mixin for Django 1.10
-try:
-    from django.utils.deprecation import MiddlewareMixin
-except ImportError:
 
-    class MiddlewareMixin:
-        pass
+def request_is_ajax(request):
+    """
+    request.is_ajax() is deprecated. Check the content_type
+
+    Returns true if request CONTENT_TYPE is "application/json"
+    """
+    return request.META.get("CONTENT_TYPE") == "application/json"
 
 
 def get_middleware_setting_name():

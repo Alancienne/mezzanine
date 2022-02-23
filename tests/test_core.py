@@ -1,10 +1,11 @@
 import re
+import subprocess
 from unittest import skipUnless
 from urllib.parse import urlencode
 
+import pkg_resources
 import pytest
 import pytz
-from django.conf.urls import url
 from django.contrib.admin import AdminSite
 from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.sites.models import Site
@@ -19,7 +20,7 @@ from django.template import RequestContext, Template
 from django.template.context import Context
 from django.templatetags.static import static
 from django.test.utils import override_settings
-from django.urls import reverse
+from django.urls import re_path, reverse
 from django.utils.encoding import force_str
 from django.utils.html import strip_tags
 from django.utils.timezone import datetime, now, timedelta
@@ -44,6 +45,31 @@ from mezzanine.utils.importing import import_dotted_path
 from mezzanine.utils.sites import current_site_id, override_current_site_id
 from mezzanine.utils.tests import TestCase
 from mezzanine.utils.urls import admin_url
+
+BRANCH_NAME = (
+    subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"])
+    .decode()
+    .strip()
+)
+VERSION_WARN = (
+    "Unpinned or pre-release dependencies detected in Mezzanine's requirements: {}"
+)
+
+
+@pytest.mark.skipif(
+    BRANCH_NAME != "stable", reason="Only runs when publishing stable releases"
+)
+def test_stable_dependencies():
+    """
+    This test is meant for CI. We want to make sure that when building the `stable`
+    branch of Mezzanine the dependencies are also stable so that we don't publish a
+    stable Mezzanine release with unstable dependencies.
+    """
+    # If a requirement is listed via a git or http url the `specs` attribute will be an
+    # empty list, so we use it to check for "pre-release" status
+    requirements = pkg_resources.working_set.by_key["mezzanine"].requires()
+    prereleases = [r.name for r in requirements if not r.specs]
+    assert not prereleases, VERSION_WARN.format(", ".join(prereleases))
 
 
 class CoreTests(TestCase):
@@ -442,7 +468,7 @@ class CoreTests(TestCase):
             fieldsets = (
                 ("Fieldset 1", {"fields": ("a",)}),
                 ("Fieldset 2", {"fields": ("_order", "b")}),
-                ("Fieldset 3", {"fields": ("c")}),
+                ("Fieldset 3", {"fields": ("c",)}),
             )
 
         request = self._request_factory.get("/admin/")
@@ -585,7 +611,7 @@ class CSRFTestViews:
         return HttpResponse(rendered)
 
     urlpatterns = [
-        url(r"^nevercache_view/", nevercache_view),
+        re_path(r"^nevercache_view/", nevercache_view),
     ]
 
 
