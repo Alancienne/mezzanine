@@ -6,6 +6,7 @@ or Django itself. Settings can also be made editable via the admin.
 
 from functools import partial
 from importlib import import_module
+import json
 from warnings import warn
 from weakref import WeakKeyDictionary
 
@@ -117,6 +118,8 @@ class Settings:
     TYPE_FUNCTIONS = {
         bool: lambda val: val != "False",
         bytes: partial(bytes, encoding="utf8"),
+        dict: lambda val: json.loads(val.replace('\'', '\"')),
+        list: lambda val: val.split(',')
     }
 
     @property
@@ -171,7 +174,6 @@ class Settings:
         Convert a value stored in the database for a particular setting
         to its correct type, as determined by ``register_setting()``.
         """
-
         type_fn = cls.TYPE_FUNCTIONS.get(setting["type"], setting["type"])
 
         try:
