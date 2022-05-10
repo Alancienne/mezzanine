@@ -118,8 +118,8 @@ class Settings:
     TYPE_FUNCTIONS = {
         bool: lambda val: val != "False",
         bytes: partial(bytes, encoding="utf8"),
-        dict: lambda val: json.loads(val.replace('\'', '\"')),
-        list: lambda val: val.split(',')
+        dict: lambda val: json.loads(val),
+        list: lambda val: json.loads(val)
     }
 
     @property
