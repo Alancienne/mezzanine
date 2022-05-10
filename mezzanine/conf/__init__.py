@@ -119,7 +119,7 @@ class Settings:
         bool: lambda val: val != "False",
         bytes: partial(bytes, encoding="utf8"),
         dict: lambda val: json.loads(val.replace('\'', '\"')),
-        list: lambda val: val.split(',')
+        list: lambda val: json.loads(val.replace('\'', '\"'))
     }
 
     @property
